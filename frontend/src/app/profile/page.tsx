@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Sun, Moon, Sunrise, Sparkles, LogOut, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getChineseZodiac, type ChineseZodiac } from "@/lib/chinese-zodiac";
 
 const ZODIAC_SYMBOLS: Record<string, string> = {
   Aries: "♈",
@@ -43,6 +44,7 @@ interface Profile {
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [chineseZodiac, setChineseZodiac] = useState<ChineseZodiac | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +70,11 @@ export default function ProfilePage() {
         setError("No profile found. Complete onboarding first.");
       } else {
         setProfile(data);
+        // Calculate Chinese Zodiac from birth year
+        if (data.birth_date) {
+          const birthYear = new Date(data.birth_date).getFullYear();
+          setChineseZodiac(getChineseZodiac(birthYear));
+        }
       }
       setIsLoading(false);
     }
@@ -157,6 +164,22 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-center gap-2 mt-2">
                   <span className="text-3xl">{ZODIAC_SYMBOLS[chart.rising_sign] || ""}</span>
                   <span className="text-xl font-semibold">{chart.rising_sign}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Chinese Zodiac */}
+        {chineseZodiac && (
+          <section className="mb-8">
+            <h2 className="text-lg font-semibold mb-4 text-muted-foreground">Chinese Zodiac</h2>
+            <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6">
+              <div className="flex items-center gap-4">
+                <span className="text-5xl">{chineseZodiac.emoji}</span>
+                <div>
+                  <p className="text-2xl font-bold text-primary">{chineseZodiac.fullSign}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{chineseZodiac.traits}</p>
                 </div>
               </div>
             </div>

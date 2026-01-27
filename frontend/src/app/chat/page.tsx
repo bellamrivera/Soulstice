@@ -17,6 +17,7 @@ interface Profile {
   sun_sign: string;
   moon_sign: string;
   rising_sign: string;
+  birth_year: number | null;
   mbti: string | null;
   enneagram_type: number | null;
   enneagram_wing: string | null;
@@ -71,10 +72,13 @@ export default function ChatPage() {
         return;
       }
 
+      const birthYear = data.birth_date ? new Date(data.birth_date).getFullYear() : null;
+
       setProfile({
         sun_sign: chart.sun_sign,
         moon_sign: chart.moon_sign,
         rising_sign: chart.rising_sign,
+        birth_year: birthYear,
         mbti: data.mbti,
         enneagram_type: data.enneagram_type,
         enneagram_wing: data.enneagram_wing,

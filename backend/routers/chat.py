@@ -9,6 +9,8 @@ from pydantic import BaseModel
 from groq import Groq
 from dotenv import load_dotenv
 
+from services.chinese_zodiac import get_chinese_zodiac
+
 load_dotenv()
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -25,6 +27,7 @@ class UserProfile(BaseModel):
     sun_sign: str
     moon_sign: str
     rising_sign: str
+    birth_year: Optional[int] = None
     mbti: Optional[str] = None
     enneagram_type: Optional[int] = None
     enneagram_wing: Optional[str] = None
@@ -47,10 +50,15 @@ def build_system_prompt(profile: UserProfile) -> str:
 
     personality_parts = []
 
-    # Astrology
+    # Western Astrology
     personality_parts.append(f"- Sun in {profile.sun_sign} (core identity, ego, life purpose)")
     personality_parts.append(f"- Moon in {profile.moon_sign} (emotions, inner self, instincts)")
     personality_parts.append(f"- Rising/Ascendant in {profile.rising_sign} (outward persona, first impressions)")
+
+    # Chinese Zodiac
+    if profile.birth_year:
+        chinese_zodiac = get_chinese_zodiac(profile.birth_year)
+        personality_parts.append(f"- Chinese Zodiac: {chinese_zodiac['full_sign']} {chinese_zodiac['emoji']} ({chinese_zodiac['traits']})")
 
     # MBTI
     if profile.mbti:
