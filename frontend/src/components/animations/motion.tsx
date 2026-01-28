@@ -1,7 +1,16 @@
 "use client";
 
-import { motion, HTMLMotionProps } from "framer-motion";
-import { ReactNode } from "react";
+import { motion, HTMLMotionProps, useReducedMotion } from "framer-motion";
+import { ReactNode, useState, useEffect } from "react";
+
+// Hook to detect if we're on the client and hydrated
+function useIsClient() {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  return isClient;
+}
 
 interface FadeInProps extends HTMLMotionProps<"div"> {
   children: ReactNode;
@@ -17,6 +26,9 @@ export function FadeIn({
   direction = "up",
   ...props
 }: FadeInProps) {
+  const isClient = useIsClient();
+  const prefersReducedMotion = useReducedMotion();
+
   const directions = {
     up: { y: 40 },
     down: { y: -40 },
@@ -24,11 +36,21 @@ export function FadeIn({
     right: { x: -40 },
   };
 
+  // On server, render visible content (no opacity:0)
+  if (!isClient) {
+    return <div {...props}>{children}</div>;
+  }
+
+  // If user prefers reduced motion, no animation
+  if (prefersReducedMotion) {
+    return <div {...props}>{children}</div>;
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, ...directions[direction] }}
       whileInView={{ opacity: 1, x: 0, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
+      viewport={{ once: true, margin: "-50px" }}
       transition={{ duration, delay, ease: "easeOut" }}
       {...props}
     >
@@ -50,11 +72,18 @@ export function StaggerContainer({
   staggerDelay = 0.1,
   className,
 }: StaggerContainerProps) {
+  const isClient = useIsClient();
+  const prefersReducedMotion = useReducedMotion();
+
+  if (!isClient || prefersReducedMotion) {
+    return <div className={className}>{children}</div>;
+  }
+
   return (
     <motion.div
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
+      viewport={{ once: true, margin: "-50px" }}
       variants={{
         hidden: {},
         visible: {
@@ -76,6 +105,13 @@ interface StaggerItemProps extends HTMLMotionProps<"div"> {
 }
 
 export function StaggerItem({ children, ...props }: StaggerItemProps) {
+  const isClient = useIsClient();
+  const prefersReducedMotion = useReducedMotion();
+
+  if (!isClient || prefersReducedMotion) {
+    return <div {...props}>{children}</div>;
+  }
+
   return (
     <motion.div
       variants={{
@@ -125,6 +161,13 @@ export function Floating({
   distance = 15,
   className,
 }: FloatingProps) {
+  const isClient = useIsClient();
+  const prefersReducedMotion = useReducedMotion();
+
+  if (!isClient || prefersReducedMotion) {
+    return <div className={className}>{children}</div>;
+  }
+
   return (
     <motion.div
       animate={{ y: [-distance / 2, distance / 2, -distance / 2] }}

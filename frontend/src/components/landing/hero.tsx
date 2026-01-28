@@ -4,41 +4,107 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { FadeIn, Floating } from "@/components/animations/motion";
 import { ArrowRight, Star } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
+
+// Use seeded random for consistent SSR/client rendering
+function seededRandom(seed: number) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
 
 function StarField() {
-  const stars = Array.from({ length: 50 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    size: Math.random() * 2 + 1,
-    delay: Math.random() * 3,
-  }));
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Generate stars with deterministic positions
+  const stars = useMemo(() =>
+    Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      x: seededRandom(i * 1) * 100,
+      y: seededRandom(i * 2 + 100) * 100,
+      size: seededRandom(i * 3 + 200) * 2 + 1,
+      delay: seededRandom(i * 4 + 300) * 3,
+    })),
+    []
+  );
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {stars.map((star) => (
-        <motion.div
-          key={star.id}
-          className="absolute rounded-full bg-white"
-          style={{
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: star.size,
-            height: star.size,
-          }}
-          animate={{
-            opacity: [0.2, 1, 0.2],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 3,
-            delay: star.delay,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
+        isClient ? (
+          <motion.div
+            key={star.id}
+            className="absolute rounded-full bg-white"
+            style={{
+              left: `${star.x}%`,
+              top: `${star.y}%`,
+              width: star.size,
+              height: star.size,
+            }}
+            animate={{
+              opacity: [0.2, 1, 0.2],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 3,
+              delay: star.delay,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ) : (
+          <div
+            key={star.id}
+            className="absolute rounded-full bg-white"
+            style={{
+              left: `${star.x}%`,
+              top: `${star.y}%`,
+              width: star.size,
+              height: star.size,
+              opacity: 0.5,
+            }}
+          />
+        )
       ))}
     </div>
+  );
+}
+
+function ScrollIndicator() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+        <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      className="absolute bottom-8 left-1/2 -translate-x-1/2"
+      animate={{ y: [0, 10, 0] }}
+      transition={{ duration: 2, repeat: Infinity }}
+    >
+      <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-2">
+        <motion.div
+          className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
+          animate={{ y: [0, 12, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+      </div>
+    </motion.div>
   );
 }
 
@@ -85,11 +151,14 @@ export function Hero() {
         <FadeIn delay={0.4}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
+              asChild
               size="lg"
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg cosmic-glow"
             >
-              Discover Your Soul Profile
-              <ArrowRight className="ml-2 w-5 h-5" />
+              <Link href="/onboarding">
+                Discover Your Soul Profile
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Link>
             </Button>
             <Button
               variant="outline"
@@ -122,20 +191,7 @@ export function Hero() {
         </FadeIn>
       </div>
 
-      {/* Scroll indicator */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-2">
-          <motion.div
-            className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
-            animate={{ y: [0, 12, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-        </div>
-      </motion.div>
+      <ScrollIndicator />
     </section>
   );
 }
