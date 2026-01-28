@@ -3,10 +3,33 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sun, Moon, Sunrise, Sparkles, LogOut, MessageCircle } from "lucide-react";
+import { Loader2, Sun, Moon, Sunrise, Sparkles, LogOut, MessageCircle, RefreshCw, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getChineseZodiac, type ChineseZodiac } from "@/lib/chinese-zodiac";
+import { getMoonPhase, getMoonSign, type MoonPhase } from "@/lib/moon-phase";
+
+interface CosmicWeather {
+  moon_phase: {
+    name: string;
+    emoji: string;
+    description: string;
+    illumination: number;
+  };
+  moon_sign: string;
+  current_year_zodiac: {
+    animal: string;
+    element: string;
+    emoji: string;
+    full_sign: string;
+  };
+}
+
+interface DailyInsight {
+  insight: string;
+  cosmic_weather: CosmicWeather;
+  generated_at: string;
+}
 
 const ZODIAC_SYMBOLS: Record<string, string> = {
   Aries: "♈",
@@ -47,6 +70,10 @@ export default function ProfilePage() {
   const [chineseZodiac, setChineseZodiac] = useState<ChineseZodiac | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dailyInsight, setDailyInsight] = useState<DailyInsight | null>(null);
+  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
+  const [moonPhase, setMoonPhase] = useState<MoonPhase | null>(null);
+  const [currentMoonSign, setCurrentMoonSign] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
@@ -75,12 +102,52 @@ export default function ProfilePage() {
           const birthYear = new Date(data.birth_date).getFullYear();
           setChineseZodiac(getChineseZodiac(birthYear));
         }
+        // Set moon data (calculated client-side for instant display)
+        setMoonPhase(getMoonPhase());
+        setCurrentMoonSign(getMoonSign());
       }
       setIsLoading(false);
     }
 
     loadProfile();
   }, [router]);
+
+  const fetchDailyInsight = async () => {
+    if (!profile || !profile.birth_charts?.[0]) return;
+
+    const chart = profile.birth_charts[0];
+    setIsLoadingInsight(true);
+
+    try {
+      const birthYear = profile.birth_date
+        ? new Date(profile.birth_date).getFullYear()
+        : undefined;
+
+      const response = await fetch("http://localhost:8000/api/daily-insight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profile: {
+            sun_sign: chart.sun_sign,
+            moon_sign: chart.moon_sign,
+            rising_sign: chart.rising_sign,
+            birth_year: birthYear,
+            mbti: profile.mbti,
+            enneagram_type: profile.enneagram_type,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDailyInsight(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch daily insight:", error);
+    } finally {
+      setIsLoadingInsight(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -136,6 +203,80 @@ export default function ProfilePage() {
             </Link>
           </Button>
         </div>
+
+        {/* Daily Insight Card */}
+        <section className="mb-8">
+          <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card/50 to-card/50 backdrop-blur-sm p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                  <span className="text-2xl">{moonPhase?.emoji || "🌙"}</span>
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Today&apos;s Cosmic Weather</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {moonPhase?.name || "Loading..."} • Moon in {currentMoonSign || "..."}
+                    {moonPhase && ` • ${moonPhase.illumination}% illuminated`}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchDailyInsight}
+                disabled={isLoadingInsight}
+                className="shrink-0"
+              >
+                {isLoadingInsight ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-1" />
+                    {dailyInsight ? "Refresh" : "Get Insight"}
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {dailyInsight ? (
+              <div className="space-y-4">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {dailyInsight.insight}
+                </p>
+                <div className="flex items-center gap-4 pt-2 border-t border-border/50 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    Year of the {dailyInsight.cosmic_weather.current_year_zodiac.full_sign} {dailyInsight.cosmic_weather.current_year_zodiac.emoji}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground mb-3">
+                  {moonPhase?.description || "Discover what the cosmos has in store for you today."}
+                </p>
+                <Button
+                  onClick={fetchDailyInsight}
+                  disabled={isLoadingInsight}
+                  variant="outline"
+                  className="border-primary/50"
+                >
+                  {isLoadingInsight ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Consulting the stars...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Get Your Daily Insight
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* Big Three */}
         {chart && (
