@@ -103,6 +103,48 @@ Guidelines for your responses:
 Remember: You're not just an astrology bot. You're a holistic self-discovery companion who sees them as a whole, unique person."""
 
 
+class GenerateTitleRequest(BaseModel):
+    message: str
+
+
+class GenerateTitleResponse(BaseModel):
+    title: str
+
+
+@router.post("/generate-title", response_model=GenerateTitleResponse)
+async def generate_title(request: GenerateTitleRequest):
+    """Generate a short, descriptive title for a conversation based on the first message."""
+
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Generate a short, concise title (3-6 words max) for a conversation that starts with the user's message below. The title should capture the topic or theme. Return ONLY the title, nothing else. No quotes, no punctuation at the end."
+                },
+                {
+                    "role": "user",
+                    "content": request.message
+                }
+            ],
+            temperature=0.7,
+            max_tokens=20,
+        )
+
+        title = completion.choices[0].message.content.strip().strip('"\'')
+        # Fallback if the model returns something too long or empty
+        if not title or len(title) > 60:
+            title = request.message[:40] + "..." if len(request.message) > 40 else request.message
+
+        return GenerateTitleResponse(title=title)
+
+    except Exception as e:
+        # Fallback to simple truncation on error
+        title = request.message[:40] + "..." if len(request.message) > 40 else request.message
+        return GenerateTitleResponse(title=title)
+
+
 @router.post("", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Send a message and get an AI response personalized to the user's profile."""
