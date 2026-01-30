@@ -12,25 +12,24 @@ const CHINESE_ZODIAC_ANIMALS = [
 
 const CHINESE_ZODIAC_ELEMENTS = ["Wood", "Fire", "Earth", "Metal", "Water"] as const;
 
-export const CHINESE_ZODIAC_INFO: Record<string, { emoji: string; traits: string }> = {
-  Rat: { emoji: "🐀", traits: "Quick-witted, resourceful, versatile" },
-  Ox: { emoji: "🐂", traits: "Diligent, dependable, strong" },
-  Tiger: { emoji: "🐅", traits: "Brave, confident, competitive" },
-  Rabbit: { emoji: "🐇", traits: "Quiet, elegant, kind" },
-  Dragon: { emoji: "🐉", traits: "Confident, intelligent, ambitious" },
-  Snake: { emoji: "🐍", traits: "Enigmatic, intelligent, wise" },
-  Horse: { emoji: "🐴", traits: "Animated, active, energetic" },
-  Goat: { emoji: "🐐", traits: "Calm, gentle, sympathetic" },
-  Monkey: { emoji: "🐒", traits: "Sharp, smart, curious" },
-  Rooster: { emoji: "🐓", traits: "Observant, hardworking, courageous" },
-  Dog: { emoji: "🐕", traits: "Loyal, honest, kind" },
-  Pig: { emoji: "🐷", traits: "Compassionate, generous, sincere" },
+export const CHINESE_ZODIAC_INFO: Record<string, { traits: string }> = {
+  Rat: { traits: "Quick-witted, resourceful, versatile" },
+  Ox: { traits: "Diligent, dependable, strong" },
+  Tiger: { traits: "Brave, confident, competitive" },
+  Rabbit: { traits: "Quiet, elegant, kind" },
+  Dragon: { traits: "Confident, intelligent, ambitious" },
+  Snake: { traits: "Enigmatic, intelligent, wise" },
+  Horse: { traits: "Animated, active, energetic" },
+  Goat: { traits: "Calm, gentle, sympathetic" },
+  Monkey: { traits: "Sharp, smart, curious" },
+  Rooster: { traits: "Observant, hardworking, courageous" },
+  Dog: { traits: "Loyal, honest, kind" },
+  Pig: { traits: "Compassionate, generous, sincere" },
 };
 
 export interface ChineseZodiac {
   animal: string;
   element: string;
-  emoji: string;
   traits: string;
   fullSign: string;
 }
@@ -52,7 +51,6 @@ export function getChineseZodiac(year: number): ChineseZodiac {
   return {
     animal,
     element,
-    emoji: info.emoji,
     traits: info.traits,
     fullSign: `${element} ${animal}`,
   };

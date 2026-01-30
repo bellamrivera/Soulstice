@@ -6,36 +6,8 @@ import { fetchBirthChart } from "@/lib/api";
 import { saveProfile } from "@/lib/profile";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sun, Moon, Sunrise, Star, RefreshCw, Save, Check, LogIn } from "lucide-react";
+import { Loader2, Sun, Moon, Sunrise, Star, RefreshCw, Save, Check, LogIn, Circle } from "lucide-react";
 import Link from "next/link";
-
-const ZODIAC_SYMBOLS: Record<string, string> = {
-  Aries: "♈",
-  Taurus: "♉",
-  Gemini: "♊",
-  Cancer: "♋",
-  Leo: "♌",
-  Virgo: "♍",
-  Libra: "♎",
-  Scorpio: "♏",
-  Sagittarius: "♐",
-  Capricorn: "♑",
-  Aquarius: "♒",
-  Pisces: "♓",
-};
-
-const PLANET_SYMBOLS: Record<string, string> = {
-  Sun: "☉",
-  Moon: "☽",
-  Mercury: "☿",
-  Venus: "♀",
-  Mars: "♂",
-  Jupiter: "♃",
-  Saturn: "♄",
-  Uranus: "♅",
-  Neptune: "♆",
-  Pluto: "♇",
-};
 
 function BigThreeCard({
   title,
@@ -50,14 +22,11 @@ function BigThreeCard({
 }) {
   return (
     <div className="flex flex-col items-center p-6 rounded-xl border border-border bg-card/50 backdrop-blur-sm">
-      <Icon className="w-8 h-8 text-primary mb-2" />
+      <Icon className="w-8 h-8 text-primary mb-3" />
       <span className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
         {title}
       </span>
-      <div className="flex items-center gap-2">
-        <span className="text-3xl">{ZODIAC_SYMBOLS[sign] || ""}</span>
-        <span className="text-xl font-semibold">{sign}</span>
-      </div>
+      <span className="text-xl font-semibold">{sign}</span>
       <span className="text-xs text-muted-foreground mt-2 text-center">
         {description}
       </span>
@@ -75,16 +44,14 @@ function PlanetRow({
   return (
     <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
       <div className="flex items-center gap-2">
-        <span className="text-lg w-6">{PLANET_SYMBOLS[planet] || "•"}</span>
+        <Circle className="w-4 h-4 text-primary" />
         <span className="text-sm font-medium">{planet}</span>
         {data.retrograde && (
-          <span className="text-xs text-amber-500 font-medium">℞</span>
+          <span className="text-xs text-amber-500 font-medium">R</span>
         )}
       </div>
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
-        <span>
-          {ZODIAC_SYMBOLS[data.sign] || ""} {data.sign}
-        </span>
+        <span>{data.sign}</span>
         <span className="text-xs">{data.position.toFixed(1)}°</span>
         <span className="text-xs">House {data.house}</span>
       </div>
@@ -268,9 +235,7 @@ export function Step4Results() {
               className="flex items-center justify-between p-2 rounded-lg bg-background/50"
             >
               <span className="text-sm font-medium">{house}</span>
-              <span className="text-sm text-muted-foreground">
-                {ZODIAC_SYMBOLS[data.sign] || ""} {data.sign}
-              </span>
+              <span className="text-sm text-muted-foreground">{data.sign}</span>
             </div>
           ))}
         </div>
@@ -286,9 +251,9 @@ export function Step4Results() {
                 key={idx}
                 className="flex items-center gap-2 text-sm p-2 rounded-lg bg-background/50"
               >
-                <span>{PLANET_SYMBOLS[aspect.planet1] || aspect.planet1}</span>
+                <span className="font-medium">{aspect.planet1}</span>
                 <span className="text-muted-foreground">{aspect.aspect}</span>
-                <span>{PLANET_SYMBOLS[aspect.planet2] || aspect.planet2}</span>
+                <span className="font-medium">{aspect.planet2}</span>
                 <span className="text-xs text-muted-foreground ml-auto">
                   {aspect.orb.toFixed(1)}°
                 </span>
